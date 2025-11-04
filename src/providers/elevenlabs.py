@@ -9,7 +9,7 @@ class ElevenLabsProvider(TTSProvider):
 
     API_ENDPOINT_TEMPLATE = "https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
     DEFAULT_VOICE_ID = "nPczCjzI2devNBz1zQrb"  # Brian
-    DEFAULT_MODEL_ID = "eleven_flash_v2_5"
+    DEFAULT_MODEL_ID = "eleven_v3"  # or eleven_flash_v2_5
     DEFAULT_OUTPUT_FORMAT = "mp3_44100_128"
 
     def __init__(self, api_key: str):
