@@ -9,7 +9,6 @@ from datetime import datetime
 
 from src.providers import create_providers
 from src.utils.audio import (
-    save_audio_temp,
     get_audio_format,
     create_request_folder,
     save_audio_permanent,
@@ -55,7 +54,9 @@ def get_generation_history(limit=5):
                         timestamp = datetime.fromisoformat(data["timestamp"])
                         text = data["text"]
                         provider_settings = data.get("provider_settings", [])
-                        generations.append((folder.name, folder, timestamp, text, provider_settings))
+                        generations.append(
+                            (folder.name, folder, timestamp, text, provider_settings)
+                        )
                 except Exception:
                     continue
             elif request_txt.exists():
@@ -143,10 +144,7 @@ def main():
             options = MODEL_OPTIONS.get(provider_name, [])
             if options:
                 selected_models[provider_name] = st.selectbox(
-                    f"{provider_name}",
-                    options=options,
-                    index=0,
-                    key=f"model_{provider_name}"
+                    f"{provider_name}", options=options, index=0, key=f"model_{provider_name}"
                 )
                 st.markdown("")  # Add spacing
 
@@ -182,6 +180,10 @@ def main():
         placeholder="Enter the text you want to convert to speech...",
     )
 
+    # Initialize session state for generation tracking
+    if "last_generation" not in st.session_state:
+        st.session_state.last_generation = None
+
     # Generate button
     if st.button("🎵 Generate Speech", type="primary", use_container_width=True):
         if not text_input.strip():
@@ -194,92 +196,154 @@ def main():
         # Create unique request folder
         request_uuid, request_folder = create_request_folder(text_input, provider_settings_list)
 
-        st.markdown("---")
-        st.subheader("Generated Audio")
-        st.markdown(f"**Request Text:** {text_input}")
-        st.info(f"📁 Request UUID: `{request_uuid}`")
-
-        # Create columns for each provider
-        cols = st.columns(len(providers))
+        # Dictionary to store audio file paths
+        audio_files = {}
 
         # Generate audio for each provider
-        for idx, (provider_name, provider) in enumerate(providers.items()):
+        for provider_name, provider in providers.items():
+            try:
+                # Show progress
+                with st.spinner(f"Generating {provider_name}..."):
+                    audio_data = provider.synthesize(text_input)
+
+                # Detect audio format
+                audio_format = get_audio_format(audio_data)
+                if not audio_format:
+                    # Default to mp3 if detection fails
+                    audio_format = "mp3"
+
+                # Save permanently to data folder
+                saved_path = save_audio_permanent(
+                    audio_data, provider_name, audio_format, request_folder
+                )
+
+                # Store the saved path
+                audio_files[provider_name] = {
+                    "path": str(saved_path),
+                    "format": audio_format,
+                }
+
+            except Exception as e:
+                audio_files[provider_name] = {"error": str(e)}
+
+        # Store generation info in session state
+        st.session_state.last_generation = {
+            "uuid": request_uuid,
+            "folder": request_folder,
+            "text": text_input,
+            "providers": list(providers.keys()),
+            "audio_files": audio_files,
+        }
+
+    # Display generated audio if available
+    if st.session_state.last_generation is not None:
+        gen_info = st.session_state.last_generation
+
+        st.markdown("---")
+        st.subheader("Generated Audio")
+        st.markdown(f"**Request Text:** {gen_info['text']}")
+        st.info(f"📁 Request UUID: `{gen_info['uuid']}`")
+
+        # Create columns for each provider
+        cols = st.columns(len(gen_info["providers"]))
+
+        # Display audio for each provider
+        for idx, provider_name in enumerate(gen_info["providers"]):
             with cols[idx]:
                 st.markdown(f"**{provider_name}**")
 
-                try:
-                    # Show progress
-                    with st.spinner(f"Generating..."):
-                        audio_data = provider.synthesize(text_input)
+                audio_info = gen_info["audio_files"].get(provider_name, {})
 
-                    # Detect audio format
-                    audio_format = get_audio_format(audio_data)
-                    if not audio_format:
-                        # Default to mp3 if detection fails
-                        audio_format = "mp3"
-
-                    # Save permanently to data folder
-                    saved_path = save_audio_permanent(
-                        audio_data, provider_name, audio_format, request_folder
-                    )
-
-                    # Also save to temp file for immediate playback
-                    temp_file = save_audio_temp(audio_data, audio_format)
-
+                if "error" in audio_info:
+                    st.error(f"❌ Error: {audio_info['error']}")
+                elif "path" in audio_info:
                     # Display audio player
-                    st.audio(temp_file, format=f"audio/{audio_format}")
+                    audio_path = audio_info["path"]
+                    audio_format = audio_info["format"]
+                    st.audio(audio_path, format=f"audio/{audio_format}")
 
-                    # Show success message with path
+                    # Show success message
                     st.success("✓ Generated")
-                    st.caption(f"Saved: {saved_path.name}")
+                    st.caption(f"Saved: {Path(audio_path).name}")
 
-                except Exception as e:
-                    st.error(f"❌ Error: {str(e)}")
+    # Display preference selection if there's a generation
+    if st.session_state.last_generation is not None:
+        gen_info = st.session_state.last_generation
 
-    # History section
-    st.markdown("---")
-    st.subheader("📜 Recent Generations")
+        st.markdown("---")
+        st.subheader("📊 Select Your Preference")
+        st.markdown("Which provider generated the best audio?")
 
-    history = get_generation_history(limit=5)
+        # Radio button for preference selection
+        preference = st.radio(
+            "Choose the provider with the best output:",
+            options=gen_info["providers"],
+            index=None,
+            key="preference_radio",
+            horizontal=True,
+        )
 
-    if not history:
-        st.info("No previous generations found. Generate some audio to see history!")
-    else:
-        for uuid, folder_path, timestamp, text, provider_settings in history:
-            with st.expander(
-                f"🎵 {text[:50]}{'...' if len(text) > 50 else ''} - {timestamp.strftime('%Y-%m-%d %H:%M:%S') if timestamp else 'Unknown'}"
-            ):
-                st.caption(f"**UUID:** `{uuid}`")
-                st.markdown(f"**Text:** {text}")
+        # Save button
+        col1, col2 = st.columns([1, 5])
+        with col1:
+            if st.button("💾 Save Preference", type="primary", disabled=(preference is None)):
+                if preference:
+                    # Save preference to result.json in the request folder
+                    result_data = {
+                        "text": gen_info["text"],
+                        "preference": preference,
+                    }
 
-                # Display provider settings if available
-                if provider_settings:
-                    st.markdown("**Provider Settings:**")
-                    for settings in provider_settings:
-                        with st.expander(f"📋 {settings.get('name', 'Unknown Provider')}"):
-                            st.json(settings)
+                    result_file = gen_info["folder"] / "result.json"
+                    with open(result_file, "w", encoding="utf-8") as f:
+                        json.dump(result_data, f, indent=2, ensure_ascii=False)
+            
+                    st.success(f"✅ Preference saved: {preference}")
 
-                st.markdown("---")
+    # # History section
+    # st.markdown("---")
+    # st.subheader("📜 Recent Generations")
 
-                # Find all audio files in the folder
-                audio_files = list(folder_path.glob("*.mp3")) + list(folder_path.glob("*.wav"))
+    # history = get_generation_history(limit=5)
 
-                if audio_files:
-                    # Create columns for audio players
-                    num_files = len(audio_files)
-                    cols = st.columns(num_files)
+    # if not history:
+    #     st.info("No previous generations found. Generate some audio to see history!")
+    # else:
+    #     for uuid, folder_path, timestamp, text, provider_settings in history:
+    #         with st.expander(
+    #             f"🎵 {text[:50]}{'...' if len(text) > 50 else ''} - {timestamp.strftime('%Y-%m-%d %H:%M:%S') if timestamp else 'Unknown'}"
+    #         ):
+    #             st.caption(f"**UUID:** `{uuid}`")
+    #             st.markdown(f"**Text:** {text}")
 
-                    for idx, audio_file in enumerate(sorted(audio_files)):
-                        with cols[idx]:
-                            # Extract provider name from filename
-                            provider_name = audio_file.stem.replace("_", " ").title()
-                            st.markdown(f"**{provider_name}**")
+    #             # Display provider settings if available
+    #             if provider_settings:
+    #                 st.markdown("**Provider Settings:**")
+    #                 for settings in provider_settings:
+    #                     with st.expander(f"📋 {settings.get('name', 'Unknown Provider')}"):
+    #                         st.json(settings)
 
-                            # Determine audio format
-                            audio_format = audio_file.suffix[1:]  # Remove the dot
-                            st.audio(str(audio_file), format=f"audio/{audio_format}")
-                else:
-                    st.warning("No audio files found for this generation.")
+    #             st.markdown("---")
+
+    #             # Find all audio files in the folder
+    #             audio_files = list(folder_path.glob("*.mp3")) + list(folder_path.glob("*.wav"))
+
+    #             if audio_files:
+    #                 # Create columns for audio players
+    #                 num_files = len(audio_files)
+    #                 cols = st.columns(num_files)
+
+    #                 for idx, audio_file in enumerate(sorted(audio_files)):
+    #                     with cols[idx]:
+    #                         # Extract provider name from filename
+    #                         provider_name = audio_file.stem.replace("_", " ").title()
+    #                         st.markdown(f"**{provider_name}**")
+
+    #                         # Determine audio format
+    #                         audio_format = audio_file.suffix[1:]  # Remove the dot
+    #                         st.audio(str(audio_file), format=f"audio/{audio_format}")
+    #             else:
+    #                 st.warning("No audio files found for this generation.")
 
     # Instructions
     st.markdown("---")
