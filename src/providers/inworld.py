@@ -14,6 +14,16 @@ class InworldProvider(TTSProvider):
     DEFAULT_SAMPLE_RATE = "44100"
     DEFAULT_FORMAT = "MP3"
 
+    def __init__(self, api_key: str, model: str = None):
+        """Initialize the Inworld provider.
+
+        Args:
+            api_key: The API key for authentication
+            model: Model to use (default: inworld-tts-1)
+        """
+        super().__init__(api_key)
+        self.model = model or self.DEFAULT_MODEL_ID
+
     @property
     def name(self) -> str:
         """Return the provider name."""
@@ -39,7 +49,7 @@ class InworldProvider(TTSProvider):
         payload = {
             "text": text,
             "voiceId": self.DEFAULT_VOICE_ID,
-            "modelId": self.DEFAULT_MODEL_ID,
+            "modelId": self.model,
             "audioConfig": {
                 "audioEncoding": self.DEFAULT_FORMAT,
                 "sampleRateHertz": self.DEFAULT_SAMPLE_RATE,

@@ -13,14 +13,15 @@ class SpeechifyProvider(TTSProvider):
     DEFAULT_MODEL = "simba-english"
     DEFAULT_FORMAT = "mp3"
 
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, model: str = None):
         """Initialize the Speechify provider.
 
         Args:
             api_key: The API key for authentication
-            voice_id: Voice ID to use (default: henry)
+            model: Model to use (default: simba-english)
         """
         super().__init__(api_key)
+        self.model = model or self.DEFAULT_MODEL
 
     @property
     def name(self) -> str:
@@ -48,7 +49,7 @@ class SpeechifyProvider(TTSProvider):
             "input": text,
             "voice_id": self.DEFAULT_VOICE_ID,
             "audio_format": self.DEFAULT_FORMAT,
-            "model": self.DEFAULT_MODEL,
+            "model": self.model,
         }
 
         response = requests.post(

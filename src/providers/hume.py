@@ -13,6 +13,16 @@ class HumeProvider(TTSProvider):
     DEFAULT_VERSION = "2"  # Octave 2
     DEFAULT_VOICE_ID = "445d65ed-a87f-4140-9820-daf6d4f0a200"  # Booming American Narrator
 
+    def __init__(self, api_key: str, model: str = None):
+        """Initialize the Hume provider.
+
+        Args:
+            api_key: The API key for authentication
+            model: Model version to use - '1' or '2' (default: '2')
+        """
+        super().__init__(api_key)
+        self.model = model or self.DEFAULT_VERSION
+
     @property
     def name(self) -> str:
         """Return the provider name."""
@@ -66,7 +76,7 @@ class HumeProvider(TTSProvider):
         payload = {
             "utterances": [{"text": text, "voice": {"id": self.DEFAULT_VOICE_ID}}],
             "format": {"type": self.DEFAULT_FORMAT},
-            "version": self.DEFAULT_VERSION,
+            "version": self.model,
         }
 
         response = requests.post(

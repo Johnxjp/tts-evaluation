@@ -9,18 +9,20 @@ class CartesiaProvider(TTSProvider):
 
     API_ENDPOINT = "https://api.cartesia.ai/tts/bytes"
     API_VERSION = "2025-04-16"
-    DEFAULT_MODEL = "sonic-3-2025-10-27"
+    DEFAULT_MODEL = "sonic-3"
     DEFAULT_VOICE_ID = "228fca29-3a0a-435c-8728-5cb483251068"  # Kiefer
     DEFAULT_SAMPLE_RATE = 44100
     DEFAULT_FORMAT = "mp3"
 
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, model: str = None):
         """Initialize the Cartesia provider.
 
         Args:
             api_key: The API key for authentication
+            model: Model to use (default: sonic-3)
         """
         super().__init__(api_key)
+        self.model = model or self.DEFAULT_MODEL
 
     @property
     def name(self) -> str:
@@ -46,7 +48,7 @@ class CartesiaProvider(TTSProvider):
         }
 
         payload = {
-            "model_id": self.DEFAULT_MODEL,
+            "model_id": self.model,
             "transcript": text,
             "voice": {
                 "mode": "id",

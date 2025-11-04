@@ -16,6 +16,11 @@ def create_providers(
     elevenlabs_key: Optional[str] = None,
     hume_key: Optional[str] = None,
     speechify_key: Optional[str] = None,
+    cartesia_model: Optional[str] = None,
+    inworld_model: Optional[str] = None,
+    elevenlabs_model: Optional[str] = None,
+    hume_model: Optional[str] = None,
+    speechify_model: Optional[str] = None,
 ) -> Dict[str, TTSProvider]:
     """Create and initialize all TTS providers.
 
@@ -25,6 +30,11 @@ def create_providers(
         elevenlabs_key: ElevenLabs API key
         hume_key: Hume API key
         speechify_key: Speechify API key
+        cartesia_model: Model for Cartesia
+        inworld_model: Model for Inworld AI
+        elevenlabs_model: Model for ElevenLabs
+        hume_model: Model for Hume
+        speechify_model: Model for Speechify
 
     Returns:
         Dictionary mapping provider names to provider instances
@@ -32,19 +42,19 @@ def create_providers(
     providers = {}
 
     if cartesia_key:
-        providers["Cartesia"] = CartesiaProvider(cartesia_key)
+        providers["Cartesia"] = CartesiaProvider(cartesia_key, model=cartesia_model)
 
     if inworld_key:
-        providers["Inworld AI"] = InworldProvider(inworld_key)
+        providers["Inworld AI"] = InworldProvider(inworld_key, model=inworld_model)
 
     if elevenlabs_key:
-        providers["ElevenLabs"] = ElevenLabsProvider(elevenlabs_key)
+        providers["ElevenLabs"] = ElevenLabsProvider(elevenlabs_key, model=elevenlabs_model)
 
     if hume_key:
-        providers["Hume"] = HumeProvider(hume_key)
+        providers["Hume"] = HumeProvider(hume_key, model=hume_model)
 
     if speechify_key:
-        providers["Speechify"] = SpeechifyProvider(speechify_key)
+        providers["Speechify"] = SpeechifyProvider(speechify_key, model=speechify_model)
 
     return providers
 

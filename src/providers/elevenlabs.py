@@ -12,14 +12,15 @@ class ElevenLabsProvider(TTSProvider):
     DEFAULT_MODEL_ID = "eleven_v3"  # or eleven_flash_v2_5
     DEFAULT_OUTPUT_FORMAT = "mp3_44100_128"
 
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, model: str = None):
         """Initialize the ElevenLabs provider.
 
         Args:
             api_key: The API key for authentication
-            voice_id: Voice ID to use (default: Rachel)
+            model: Model to use (default: eleven_v3)
         """
         super().__init__(api_key)
+        self.model = model or self.DEFAULT_MODEL_ID
 
     @property
     def name(self) -> str:
@@ -45,7 +46,7 @@ class ElevenLabsProvider(TTSProvider):
 
         payload = {
             "text": text,
-            "model_id": self.DEFAULT_MODEL_ID,
+            "model_id": self.model,
         }
 
         url = self.API_ENDPOINT_TEMPLATE.format(voice_id=self.DEFAULT_VOICE_ID)

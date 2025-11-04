@@ -1,11 +1,12 @@
 """Main Streamlit application for TTS evaluation."""
 
+import os
 import streamlit as st
 from dotenv import load_dotenv
 from pathlib import Path
 from datetime import datetime
 
-from src.providers import load_providers_from_env
+from src.providers import create_providers
 from src.utils.audio import (
     save_audio_temp,
     get_audio_format,
@@ -15,6 +16,15 @@ from src.utils.audio import (
 
 # Load environment variables
 load_dotenv()
+
+# Model options for each provider
+MODEL_OPTIONS = {
+    "Cartesia": ["sonic-3", "sonic-2"],
+    "ElevenLabs": ["eleven_v3", "eleven_flash_v2_5"],
+    "Inworld AI": ["inworld-tts-1", "inworld-tts-1-max"],
+    "Hume": ["2", "1"],
+    "Speechify": ["simba-english"],
+}
 
 
 def get_generation_history(limit=5):
@@ -71,10 +81,21 @@ def main():
     st.title("🎙️ Text-to-Speech Evaluation Tool")
     st.markdown("Compare the quality of different text-to-speech services side-by-side.")
 
-    # Load providers
-    providers = load_providers_from_env()
+    # Model Selection Toolbar
+    st.markdown("---")
+    st.subheader("⚙️ Model Settings")
 
-    if not providers:
+    # Get API keys
+    api_keys = {
+        "cartesia": os.getenv("CARTESIA_API_KEY"),
+        "inworld": os.getenv("INWORLD_API_KEY"),
+        "elevenlabs": os.getenv("ELEVENLABS_API_KEY"),
+        "hume": os.getenv("HUME_API_KEY"),
+        "speechify": os.getenv("SPEECHIFY_API_KEY"),
+    }
+
+    # Check if any providers are configured
+    if not any(api_keys.values()):
         st.error("⚠️ No TTS providers configured. Please set up your API keys in the .env file.")
         st.info(
             """
@@ -87,6 +108,55 @@ def main():
             """
         )
         return
+
+    # Create columns for model selection
+    available_providers = []
+    if api_keys["cartesia"]:
+        available_providers.append("Cartesia")
+    if api_keys["elevenlabs"]:
+        available_providers.append("ElevenLabs")
+    if api_keys["inworld"]:
+        available_providers.append("Inworld AI")
+    if api_keys["hume"]:
+        available_providers.append("Hume")
+    if api_keys["speechify"]:
+        available_providers.append("Speechify")
+
+    num_providers = len(available_providers)
+    cols = st.columns(num_providers)
+
+    # Store selected models
+    selected_models = {}
+
+    for idx, provider_name in enumerate(available_providers):
+        with cols[idx]:
+            options = MODEL_OPTIONS.get(provider_name, [])
+            if options:
+                if len(options) == 1:
+                    st.markdown(f"**{provider_name}**")
+                    st.text(options[0])
+                    selected_models[provider_name] = options[0]
+                else:
+                    selected_models[provider_name] = st.selectbox(
+                        f"**{provider_name}**",
+                        options=options,
+                        index=0,
+                        key=f"model_{provider_name}"
+                    )
+
+    # Load providers with selected models
+    providers = create_providers(
+        cartesia_key=api_keys["cartesia"],
+        inworld_key=api_keys["inworld"],
+        elevenlabs_key=api_keys["elevenlabs"],
+        hume_key=api_keys["hume"],
+        speechify_key=api_keys["speechify"],
+        cartesia_model=selected_models.get("Cartesia"),
+        inworld_model=selected_models.get("Inworld AI"),
+        elevenlabs_model=selected_models.get("ElevenLabs"),
+        hume_model=selected_models.get("Hume"),
+        speechify_model=selected_models.get("Speechify"),
+    )
 
     # Display active providers
     st.success(f"✅ Loaded {len(providers)} TTS provider(s): {', '.join(providers.keys())}")
