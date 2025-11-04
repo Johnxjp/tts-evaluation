@@ -1,5 +1,6 @@
 """Cartesia TTS provider implementation."""
 
+import re
 import requests
 from src.providers.base import TTSProvider
 
@@ -13,6 +14,15 @@ class CartesiaProvider(TTSProvider):
     DEFAULT_VOICE_ID = "228fca29-3a0a-435c-8728-5cb483251068"  # Kiefer
     DEFAULT_SAMPLE_RATE = 44100
     DEFAULT_FORMAT = "mp3"
+
+    # Emotion mapping for Cartesia
+    EMOTION_MAP = {
+        "laughter": "laughter",
+        "angry": "angry",
+        "excited": "excited",
+        "sad": "sad",
+        "scared": "scared",
+    }
 
     def __init__(self, api_key: str, model: str = None):
         """Initialize the Cartesia provider.
@@ -40,11 +50,44 @@ class CartesiaProvider(TTSProvider):
             "sample_rate": self.DEFAULT_SAMPLE_RATE,
         }
 
+    @property
+    def can_emote(self) -> bool:
+        """Return whether this provider supports emotions.
+
+        Cartesia supports emotions only for sonic-3 class models.
+        """
+        return self.model.startswith("sonic-3")
+
+    def _process_emotion_tags(self, text: str) -> str:
+        """Process emotion tags into Cartesia format.
+
+        Cartesia uses square brackets: [emotion]
+        Replaces <tag>emotion</tag> with [emotion]
+
+        Args:
+            text: Text with emotion tags in format <tag>emotion</tag>
+
+        Returns:
+            Text formatted with Cartesia emotion markup, or text without tags if emotions not supported
+        """
+        if not self.can_emote:
+            # Remove emotion tags if provider doesn't support emotions
+            return re.sub(r'<tag>(.*?)</tag>', '', text).strip()
+
+        # Replace <tag>emotion</tag> with [emotion] for supported emotions
+        def replace_tag(match):
+            emotion = match.group(1).strip().lower()
+            if emotion in self.EMOTION_MAP:
+                return f"[{self.EMOTION_MAP[emotion]}]"
+            return ""  # Remove unsupported emotion tags
+
+        return re.sub(r'<tag>(.*?)</tag>', replace_tag, text).strip()
+
     def synthesize(self, text: str) -> bytes:
         """Synthesize speech using Cartesia API.
 
         Args:
-            text: The text to convert to speech
+            text: The text to convert to speech (may include emotion tags)
 
         Returns:
             Audio data as bytes
@@ -52,6 +95,9 @@ class CartesiaProvider(TTSProvider):
         Raises:
             Exception: If synthesis fails
         """
+        # Process emotion tags
+        processed_text = self._process_emotion_tags(text)
+
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Cartesia-Version": self.API_VERSION,
@@ -60,7 +106,7 @@ class CartesiaProvider(TTSProvider):
 
         payload = {
             "model_id": self.model,
-            "transcript": text,
+            "transcript": processed_text,
             "voice": {
                 "mode": "id",
                 "id": self.DEFAULT_VOICE_ID,

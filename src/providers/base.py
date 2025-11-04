@@ -19,8 +19,11 @@ class TTSProvider(ABC):
     def synthesize(self, text: str) -> bytes:
         """Synthesize speech from text.
 
+        Text may contain emotion tags in format <tag>emotion</tag>.
+        Each provider will process these tags according to their API requirements.
+
         Args:
-            text: The text to convert to speech
+            text: The text to convert to speech (may include emotion tags)
 
         Returns:
             Audio data as bytes (WAV or MP3 format)
@@ -43,6 +46,16 @@ class TTSProvider(ABC):
 
         Returns:
             Dictionary with keys: name, model_id, format, voice_id, sample_rate
+        """
+        pass
+
+    @property
+    @abstractmethod
+    def can_emote(self) -> bool:
+        """Return whether this provider/model supports emotion tags.
+
+        Returns:
+            True if provider supports emotions, False otherwise
         """
         pass
 

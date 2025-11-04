@@ -1,5 +1,6 @@
 """Inworld AI TTS provider implementation."""
 
+import re
 import base64
 import requests
 from src.providers.base import TTSProvider
@@ -13,6 +14,15 @@ class InworldProvider(TTSProvider):
     DEFAULT_MODEL_ID = "inworld-tts-1"
     DEFAULT_SAMPLE_RATE = 44100
     DEFAULT_FORMAT = "MP3"
+
+    # Emotion mapping for Inworld AI
+    EMOTION_MAP = {
+        "laughter": "laughing",
+        "angry": "angry",
+        "excited": "happy",
+        "sad": "sad",
+        "scared": "fearful",
+    }
 
     def __init__(self, api_key: str, model: str = None):
         """Initialize the Inworld provider.
@@ -40,11 +50,40 @@ class InworldProvider(TTSProvider):
             "sample_rate": self.DEFAULT_SAMPLE_RATE,
         }
 
+    @property
+    def can_emote(self) -> bool:
+        """Return whether this provider supports emotions.
+
+        Inworld AI supports emotions for both models.
+        """
+        return True
+
+    def _process_emotion_tags(self, text: str) -> str:
+        """Process emotion tags into Inworld AI format.
+
+        Inworld AI uses square brackets: [emotion]
+        Replaces <tag>emotion</tag> with [emotion]
+
+        Args:
+            text: Text with emotion tags in format <tag>emotion</tag>
+
+        Returns:
+            Text formatted with Inworld AI emotion markup
+        """
+        # Replace <tag>emotion</tag> with [emotion] for supported emotions
+        def replace_tag(match):
+            emotion = match.group(1).strip().lower()
+            if emotion in self.EMOTION_MAP:
+                return f"[{self.EMOTION_MAP[emotion]}]"
+            return ""  # Remove unsupported emotion tags
+
+        return re.sub(r'<tag>(.*?)</tag>', replace_tag, text).strip()
+
     def synthesize(self, text: str) -> bytes:
         """Synthesize speech using Inworld AI API.
 
         Args:
-            text: The text to convert to speech
+            text: The text to convert to speech (may include emotion tags)
 
         Returns:
             Audio data as bytes (MP3 format)
@@ -52,13 +91,16 @@ class InworldProvider(TTSProvider):
         Raises:
             Exception: If synthesis fails
         """
+        # Process emotion tags
+        processed_text = self._process_emotion_tags(text)
+
         headers = {
             "Authorization": f"Basic {self.api_key}",
             "Content-Type": "application/json",
         }
 
         payload = {
-            "text": text,
+            "text": processed_text,
             "voiceId": self.DEFAULT_VOICE_ID,
             "modelId": self.model,
             "audioConfig": {

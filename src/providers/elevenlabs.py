@@ -1,5 +1,6 @@
 """ElevenLabs TTS provider implementation."""
 
+import re
 import requests
 from src.providers.base import TTSProvider
 
@@ -13,6 +14,15 @@ class ElevenLabsProvider(TTSProvider):
     DEFAULT_FORMAT = "mp3"
     DEFAULT_SAMPLE_RATE = 44100
     DEFAULT_BIT_RATE = 128
+
+    # Emotion mapping for ElevenLabs
+    EMOTION_MAP = {
+        "laughter": "laughter",
+        "angry": "angry",
+        "excited": "excited",
+        "sad": "sad",
+        "scared": "scared",
+    }
 
     def __init__(self, api_key: str, model: str = None):
         """Initialize the ElevenLabs provider.
@@ -40,6 +50,39 @@ class ElevenLabsProvider(TTSProvider):
             "sample_rate": self.DEFAULT_SAMPLE_RATE,
         }
 
+    @property
+    def can_emote(self) -> bool:
+        """Return whether this provider supports emotions.
+
+        ElevenLabs supports emotions only for eleven_v3 model.
+        """
+        return self.model == "eleven_v3"
+
+    def _process_emotion_tags(self, text: str) -> str:
+        """Process emotion tags into ElevenLabs format.
+
+        ElevenLabs uses square brackets: [emotion]
+        Replaces <tag>emotion</tag> with [emotion]
+
+        Args:
+            text: Text with emotion tags in format <tag>emotion</tag>
+
+        Returns:
+            Text formatted with ElevenLabs emotion markup, or text without tags if emotions not supported
+        """
+        if not self.can_emote:
+            # Remove emotion tags if provider doesn't support emotions
+            return re.sub(r'<tag>(.*?)</tag>', '', text).strip()
+
+        # Replace <tag>emotion</tag> with [emotion] for supported emotions
+        def replace_tag(match):
+            emotion = match.group(1).strip().lower()
+            if emotion in self.EMOTION_MAP:
+                return f"[{self.EMOTION_MAP[emotion]}]"
+            return ""  # Remove unsupported emotion tags
+
+        return re.sub(r'<tag>(.*?)</tag>', replace_tag, text).strip()
+
     def synthesize(self, text: str) -> bytes:
         """Synthesize speech using ElevenLabs API.
 
@@ -52,6 +95,8 @@ class ElevenLabsProvider(TTSProvider):
         Raises:
             Exception: If synthesis fails
         """
+
+        text = self._process_emotion_tags(text)
         headers = {
             "xi-api-key": self.api_key,
             "Content-Type": "application/json",
