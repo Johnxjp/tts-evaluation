@@ -120,6 +120,7 @@ class SpeechifyProvider(TTSProvider):
         """
 
         text = self._process_emotion_tags(text)
+        print(self.name, text)
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",

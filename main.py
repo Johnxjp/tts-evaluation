@@ -13,6 +13,10 @@ from src.utils.audio import (
     create_request_folder,
     save_audio_permanent,
 )
+from src.utils.emotion import (
+    parse_emotion_tags,
+    SUPPORTED_EMOTIONS,
+)
 
 # Load environment variables
 load_dotenv()
@@ -187,16 +191,44 @@ def main():
             """
         )
 
+    # Initialize session state for text input
+    if "text_input" not in st.session_state:
+        st.session_state.text_input = (
+            "Hello! This is a test of the text-to-speech system. How does this sound?"
+        )
+
     # Text input
     st.markdown("---")
 
-    default_text = "Hello! This is a test of the text-to-speech system. How does this sound?"
     text_input = st.text_area(
         "Text:",
-        value=default_text,
+        value=st.session_state.text_input,
         height=100,
         placeholder="Enter the text you want to convert to speech...",
+        key="text_area_widget",
     )
+
+    # Update session state when text changes
+    st.session_state.text_input = text_input
+
+    # Emotion buttons
+    st.markdown("**Add Emotion Tags**")
+    st.text(
+        "You can add emotions like <tag>EMOTION</tag>. Supported emotions are laughter, angry, excited, sad and scared. Not every model supports emotions. Unsupported emotions will be stripped out"
+    )
+
+    # Show which models support emotions
+    st.markdown("---")
+    emotion_support_info = []
+    for provider_name, provider in providers.items():
+        if provider.can_emote:
+            emotion_support_info.append(f"✅ {provider_name}")
+        else:
+            emotion_support_info.append(f"❌ {provider_name}")
+
+    with st.expander("🎭 Emotion Support by Provider"):
+        st.markdown(" | ".join(emotion_support_info))
+        st.caption("✅ = Supports emotions | ❌ = Does not support emotions (tags will be removed)")
 
     # Initialize session state for generation tracking
     if "last_generation" not in st.session_state:
@@ -207,7 +239,6 @@ def main():
         if not text_input.strip():
             st.warning("Please enter some text to synthesize.")
             return
-
         # Collect provider settings
         provider_settings_list = [provider.settings for provider in providers.values()]
 
@@ -362,7 +393,6 @@ def main():
     #                         st.audio(str(audio_file), format=f"audio/{audio_format}")
     #             else:
     #                 st.warning("No audio files found for this generation.")
-
 
 
 if __name__ == "__main__":

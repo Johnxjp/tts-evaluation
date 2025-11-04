@@ -121,6 +121,7 @@ class HumeProvider(TTSProvider):
         """
 
         text, emotions = self._process_emotion_tags(text)
+        print(self.name, text)
         headers = {
             "X-Hume-Api-Key": self.api_key,
             "Content-Type": "application/json",

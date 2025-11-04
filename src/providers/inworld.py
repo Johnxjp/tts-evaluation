@@ -70,6 +70,7 @@ class InworldProvider(TTSProvider):
         Returns:
             Text formatted with Inworld AI emotion markup
         """
+
         # Replace <tag>emotion</tag> with [emotion] for supported emotions
         def replace_tag(match):
             emotion = match.group(1).strip().lower()
@@ -77,7 +78,7 @@ class InworldProvider(TTSProvider):
                 return f"[{self.EMOTION_MAP[emotion]}]"
             return ""  # Remove unsupported emotion tags
 
-        return re.sub(r'<tag>(.*?)</tag>', replace_tag, text).strip()
+        return re.sub(r"<tag>(.*?)</tag>", replace_tag, text).strip()
 
     def synthesize(self, text: str) -> bytes:
         """Synthesize speech using Inworld AI API.
@@ -92,15 +93,15 @@ class InworldProvider(TTSProvider):
             Exception: If synthesis fails
         """
         # Process emotion tags
-        processed_text = self._process_emotion_tags(text)
-
+        text = self._process_emotion_tags(text)
+        print(self.name, text)
         headers = {
             "Authorization": f"Basic {self.api_key}",
             "Content-Type": "application/json",
         }
 
         payload = {
-            "text": processed_text,
+            "text": text,
             "voiceId": self.DEFAULT_VOICE_ID,
             "modelId": self.model,
             "audioConfig": {

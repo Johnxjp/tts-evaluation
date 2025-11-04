@@ -72,7 +72,7 @@ class CartesiaProvider(TTSProvider):
         """
         if not self.can_emote:
             # Remove emotion tags if provider doesn't support emotions
-            return re.sub(r'<tag>(.*?)</tag>', '', text).strip()
+            return re.sub(r"<tag>(.*?)</tag>", "", text).strip()
 
         # Replace <tag>emotion</tag> with [emotion] for supported emotions
         def replace_tag(match):
@@ -81,7 +81,7 @@ class CartesiaProvider(TTSProvider):
                 return f"[{self.EMOTION_MAP[emotion]}]"
             return ""  # Remove unsupported emotion tags
 
-        return re.sub(r'<tag>(.*?)</tag>', replace_tag, text).strip()
+        return re.sub(r"<tag>(.*?)</tag>", replace_tag, text).strip()
 
     def synthesize(self, text: str) -> bytes:
         """Synthesize speech using Cartesia API.
@@ -96,7 +96,8 @@ class CartesiaProvider(TTSProvider):
             Exception: If synthesis fails
         """
         # Process emotion tags
-        processed_text = self._process_emotion_tags(text)
+        text = self._process_emotion_tags(text)
+        print(self.name, text)
 
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -106,7 +107,7 @@ class CartesiaProvider(TTSProvider):
 
         payload = {
             "model_id": self.model,
-            "transcript": processed_text,
+            "transcript": text,
             "voice": {
                 "mode": "id",
                 "id": self.DEFAULT_VOICE_ID,
