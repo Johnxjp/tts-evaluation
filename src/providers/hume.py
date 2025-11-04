@@ -29,12 +29,40 @@ class HumeProvider(TTSProvider):
 
         Raises:
             Exception: If synthesis fails
+
+        Example request format
+        curl -X POST https://api.hume.ai/v0/tts \
+            -H "X-Hume-Api-Key: <apiKey>" \
+            -H "Content-Type: application/json" \
+            -d '{
+        "utterances": [
+            {
+            "text": "Beauty is no quality in things themselves: It exists merely in the mind which contemplates them.",
+            "description": "Middle-aged masculine voice with a clear, rhythmic Scots lilt, rounded vowels, and a warm, steady tone with an articulate, academic quality."
+            }
+        ],
+        "context": {
+            "utterances": [
+            {
+                "text": "How can people see beauty so differently?",
+                "description": "A curious student with a clear and respectful tone, seeking clarification on Hume\'s ideas with a straightforward question."
+            }
+            ]
+        },
+        "format": {
+            "type": "mp3"
+        },
+        "num_generations": 1,
+        "version": "2"
+        }'
+        
         """
         headers = {
             "X-Hume-Api-Key": self.api_key,
             "Content-Type": "application/json",
         }
 
+        # Do not change the Payload format
         payload = {
             "utterances": [{"text": text, "voice": {"id": self.DEFAULT_VOICE_ID}}],
             "format": {"type": self.DEFAULT_FORMAT},
@@ -53,11 +81,11 @@ class HumeProvider(TTSProvider):
 
         response_data = response.json()
 
-        # Extract audio from the first generation
-        if not response_data or len(response_data) == 0:
+        # Extract audio from generations[0].audio
+        if "generations" not in response_data or len(response_data["generations"]) == 0:
             raise Exception("No generations in Hume response")
 
-        first_generation = response_data[0]
+        first_generation = response_data["generations"][0]
         audio_b64 = first_generation.get("audio")
 
         if not audio_b64:
