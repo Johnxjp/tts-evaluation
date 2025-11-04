@@ -3,6 +3,7 @@
 import streamlit as st
 from dotenv import load_dotenv
 from pathlib import Path
+from datetime import datetime
 
 from src.providers import load_providers_from_env
 from src.utils.audio import (
@@ -14,6 +15,49 @@ from src.utils.audio import (
 
 # Load environment variables
 load_dotenv()
+
+
+def get_generation_history(limit=5):
+    """Get the last N generations from the data folder.
+
+    Args:
+        limit: Maximum number of generations to retrieve
+
+    Returns:
+        List of tuples (uuid, folder_path, timestamp, text) sorted by newest first
+    """
+    data_dir = Path.cwd() / "data"
+    if not data_dir.exists():
+        return []
+
+    generations = []
+    for folder in data_dir.iterdir():
+        if folder.is_dir():
+            request_file = folder / "request.txt"
+            if request_file.exists():
+                try:
+                    with open(request_file, "r", encoding="utf-8") as f:
+                        lines = f.readlines()
+                        timestamp = None
+                        text = ""
+
+                        # Parse request.txt
+                        for i, line in enumerate(lines):
+                            if line.startswith("Timestamp:"):
+                                timestamp_str = line.replace("Timestamp:", "").strip()
+                                timestamp = datetime.fromisoformat(timestamp_str)
+                            elif i >= 3:  # Text starts after line 3
+                                text += line
+
+                        text = text.strip()
+                        generations.append((folder.name, folder, timestamp, text))
+                except Exception:
+                    continue
+
+    # Sort by timestamp (newest first)
+    generations.sort(key=lambda x: x[2] if x[2] else datetime.min, reverse=True)
+
+    return generations[:limit]
 
 
 def main():
@@ -66,11 +110,11 @@ def main():
             return
 
         # Create unique request folder
-        request_uuid, request_folder = create_request_folder(text_input)
+        _, request_folder = create_request_folder(text_input)
 
         st.markdown("---")
         st.subheader("Generated Audio")
-        st.info(f"📁 Request UUID: `{request_uuid}`")
+        st.info(f"Text: `{text_input}`")
 
         # Create columns for each provider
         cols = st.columns(len(providers))
@@ -108,6 +152,41 @@ def main():
 
                 except Exception as e:
                     st.error(f"❌ Error: {str(e)}")
+
+    # History section
+    st.markdown("---")
+    st.subheader("Recent History")
+
+    history = get_generation_history(limit=5)
+
+    if not history:
+        st.info("No previous generations found. Generate some audio to see history!")
+    else:
+        for uuid, folder_path, timestamp, text in history:
+            with st.expander(
+                f"{text[:50]}{'...' if len(text) > 50 else ''} - {timestamp.strftime('%Y-%m-%d %H:%M:%S') if timestamp else 'Unknown'}"
+            ):
+                st.markdown(f"**Text:** {text}")
+
+                # Find all audio files in the folder
+                audio_files = list(folder_path.glob("*.mp3")) + list(folder_path.glob("*.wav"))
+
+                if audio_files:
+                    # Create columns for audio players
+                    num_files = len(audio_files)
+                    cols = st.columns(num_files)
+
+                    for idx, audio_file in enumerate(sorted(audio_files)):
+                        with cols[idx]:
+                            # Extract provider name from filename
+                            provider_name = audio_file.stem.replace("_", " ").title()
+                            st.markdown(f"**{provider_name}**")
+
+                            # Determine audio format
+                            audio_format = audio_file.suffix[1:]  # Remove the dot
+                            st.audio(str(audio_file), format=f"audio/{audio_format}")
+                else:
+                    st.warning("No audio files found for this generation.")
 
     # Instructions
     st.markdown("---")
