@@ -29,6 +29,17 @@ class CartesiaProvider(TTSProvider):
         """Return the provider name."""
         return "Cartesia"
 
+    @property
+    def settings(self):
+        """Return provider settings."""
+        return {
+            "name": self.name,
+            "model_id": self.model,
+            "format": self.DEFAULT_FORMAT,
+            "voice_id": self.DEFAULT_VOICE_ID,
+            "sample_rate": self.DEFAULT_SAMPLE_RATE,
+        }
+
     def synthesize(self, text: str) -> bytes:
         """Synthesize speech using Cartesia API.
 

@@ -28,6 +28,17 @@ class HumeProvider(TTSProvider):
         """Return the provider name."""
         return "Hume"
 
+    @property
+    def settings(self):
+        """Return provider settings."""
+        return {
+            "name": self.name,
+            "model_id": self.model,
+            "format": self.DEFAULT_FORMAT,
+            "voice_id": self.DEFAULT_VOICE_ID,
+            "sample_rate": None,
+        }
+
     def synthesize(self, text: str) -> bytes:
         """Synthesize speech using Hume API.
 

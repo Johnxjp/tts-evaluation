@@ -1,6 +1,7 @@
 """Main Streamlit application for TTS evaluation."""
 
 import os
+import json
 import streamlit as st
 from dotenv import load_dotenv
 from pathlib import Path
@@ -34,7 +35,7 @@ def get_generation_history(limit=5):
         limit: Maximum number of generations to retrieve
 
     Returns:
-        List of tuples (uuid, folder_path, timestamp, text) sorted by newest first
+        List of tuples (uuid, folder_path, timestamp, text, provider_settings) sorted by newest first
     """
     data_dir = Path.cwd() / "data"
     if not data_dir.exists():
@@ -43,10 +44,24 @@ def get_generation_history(limit=5):
     generations = []
     for folder in data_dir.iterdir():
         if folder.is_dir():
-            request_file = folder / "request.txt"
-            if request_file.exists():
+            # Try new JSON format first
+            request_json = folder / "request.json"
+            request_txt = folder / "request.txt"
+
+            if request_json.exists():
                 try:
-                    with open(request_file, "r", encoding="utf-8") as f:
+                    with open(request_json, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                        timestamp = datetime.fromisoformat(data["timestamp"])
+                        text = data["text"]
+                        provider_settings = data.get("provider_settings", [])
+                        generations.append((folder.name, folder, timestamp, text, provider_settings))
+                except Exception:
+                    continue
+            elif request_txt.exists():
+                # Support old format for backward compatibility
+                try:
+                    with open(request_txt, "r", encoding="utf-8") as f:
                         lines = f.readlines()
                         timestamp = None
                         text = ""
@@ -60,7 +75,7 @@ def get_generation_history(limit=5):
                                 text += line
 
                         text = text.strip()
-                        generations.append((folder.name, folder, timestamp, text))
+                        generations.append((folder.name, folder, timestamp, text, []))
                 except Exception:
                     continue
 
@@ -77,13 +92,6 @@ def main():
         page_icon="🎙️",
         layout="wide",
     )
-
-    st.title("🎙️ Text-to-Speech Evaluation Tool")
-    st.markdown("Compare the quality of different text-to-speech services side-by-side.")
-
-    # Model Selection Toolbar
-    st.markdown("---")
-    st.subheader("⚙️ Model Settings")
 
     # Get API keys
     api_keys = {
@@ -109,27 +117,29 @@ def main():
         )
         return
 
-    # Create columns for model selection
-    available_providers = []
-    if api_keys["cartesia"]:
-        available_providers.append("Cartesia")
-    if api_keys["elevenlabs"]:
-        available_providers.append("ElevenLabs")
-    if api_keys["inworld"]:
-        available_providers.append("Inworld AI")
-    if api_keys["hume"]:
-        available_providers.append("Hume")
-    if api_keys["speechify"]:
-        available_providers.append("Speechify")
+    # Sidebar - Model Selection
+    with st.sidebar:
+        st.header("⚙️ Model Settings")
+        st.markdown("Select the model for each TTS provider:")
+        st.markdown("---")
 
-    num_providers = len(available_providers)
-    cols = st.columns(num_providers)
+        # Determine available providers
+        available_providers = []
+        if api_keys["cartesia"]:
+            available_providers.append("Cartesia")
+        if api_keys["elevenlabs"]:
+            available_providers.append("ElevenLabs")
+        if api_keys["inworld"]:
+            available_providers.append("Inworld AI")
+        if api_keys["hume"]:
+            available_providers.append("Hume")
+        if api_keys["speechify"]:
+            available_providers.append("Speechify")
 
-    # Store selected models
-    selected_models = {}
+        # Store selected models
+        selected_models = {}
 
-    for idx, provider_name in enumerate(available_providers):
-        with cols[idx]:
+        for provider_name in available_providers:
             options = MODEL_OPTIONS.get(provider_name, [])
             if options:
                 if len(options) == 1:
@@ -138,11 +148,12 @@ def main():
                     selected_models[provider_name] = options[0]
                 else:
                     selected_models[provider_name] = st.selectbox(
-                        f"**{provider_name}**",
+                        f"{provider_name}",
                         options=options,
                         index=0,
                         key=f"model_{provider_name}"
                     )
+                st.markdown("")  # Add spacing
 
     # Load providers with selected models
     providers = create_providers(
@@ -157,6 +168,9 @@ def main():
         hume_model=selected_models.get("Hume"),
         speechify_model=selected_models.get("Speechify"),
     )
+
+    st.title("🎙️ Text-to-Speech Evaluation Tool")
+    st.markdown("Compare the quality of different text-to-speech services side-by-side.")
 
     # Display active providers
     st.success(f"✅ Loaded {len(providers)} TTS provider(s): {', '.join(providers.keys())}")
@@ -179,12 +193,15 @@ def main():
             st.warning("Please enter some text to synthesize.")
             return
 
+        # Collect provider settings
+        provider_settings_list = [provider.settings for provider in providers.values()]
+
         # Create unique request folder
-        _, request_folder = create_request_folder(text_input)
+        request_uuid, request_folder = create_request_folder(text_input, provider_settings_list)
 
         st.markdown("---")
         st.subheader("Generated Audio")
-        st.info(f"Text: `{text_input}`")
+        st.info(f"📁 Request UUID: `{request_uuid}`")
 
         # Create columns for each provider
         cols = st.columns(len(providers))
@@ -225,18 +242,28 @@ def main():
 
     # History section
     st.markdown("---")
-    st.subheader("Recent History")
+    st.subheader("📜 Recent Generations")
 
     history = get_generation_history(limit=5)
 
     if not history:
         st.info("No previous generations found. Generate some audio to see history!")
     else:
-        for uuid, folder_path, timestamp, text in history:
+        for uuid, folder_path, timestamp, text, provider_settings in history:
             with st.expander(
-                f"{text[:50]}{'...' if len(text) > 50 else ''} - {timestamp.strftime('%Y-%m-%d %H:%M:%S') if timestamp else 'Unknown'}"
+                f"🎵 {text[:50]}{'...' if len(text) > 50 else ''} - {timestamp.strftime('%Y-%m-%d %H:%M:%S') if timestamp else 'Unknown'}"
             ):
+                st.caption(f"**UUID:** `{uuid}`")
                 st.markdown(f"**Text:** {text}")
+
+                # Display provider settings if available
+                if provider_settings:
+                    st.markdown("**Provider Settings:**")
+                    for settings in provider_settings:
+                        with st.expander(f"📋 {settings.get('name', 'Unknown Provider')}"):
+                            st.json(settings)
+
+                st.markdown("---")
 
                 # Find all audio files in the folder
                 audio_files = list(folder_path.glob("*.mp3")) + list(folder_path.glob("*.wav"))

@@ -1,6 +1,7 @@
 """Base class for TTS providers."""
 
 from abc import ABC, abstractmethod
+from typing import Dict, Any
 
 
 class TTSProvider(ABC):
@@ -33,6 +34,16 @@ class TTSProvider(ABC):
     @abstractmethod
     def name(self) -> str:
         """Return the provider name."""
+        pass
+
+    @property
+    @abstractmethod
+    def settings(self) -> Dict[str, Any]:
+        """Return provider settings as a dictionary.
+
+        Returns:
+            Dictionary with keys: name, model_id, format, voice_id, sample_rate
+        """
         pass
 
     def validate_api_key(self) -> bool:

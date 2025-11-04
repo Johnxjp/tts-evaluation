@@ -10,7 +10,9 @@ class ElevenLabsProvider(TTSProvider):
     API_ENDPOINT_TEMPLATE = "https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
     DEFAULT_VOICE_ID = "nPczCjzI2devNBz1zQrb"  # Brian
     DEFAULT_MODEL_ID = "eleven_v3"  # or eleven_flash_v2_5
-    DEFAULT_OUTPUT_FORMAT = "mp3_44100_128"
+    DEFAULT_FORMAT = "mp3"
+    DEFAULT_SAMPLE_RATE = 44100
+    DEFAULT_BIT_RATE = 128
 
     def __init__(self, api_key: str, model: str = None):
         """Initialize the ElevenLabs provider.
@@ -26,6 +28,17 @@ class ElevenLabsProvider(TTSProvider):
     def name(self) -> str:
         """Return the provider name."""
         return "ElevenLabs"
+
+    @property
+    def settings(self):
+        """Return provider settings."""
+        return {
+            "name": self.name,
+            "model_id": self.model,
+            "format": self.DEFAULT_FORMAT,
+            "voice_id": self.DEFAULT_VOICE_ID,
+            "sample_rate": self.DEFAULT_SAMPLE_RATE,
+        }
 
     def synthesize(self, text: str) -> bytes:
         """Synthesize speech using ElevenLabs API.
@@ -49,8 +62,9 @@ class ElevenLabsProvider(TTSProvider):
             "model_id": self.model,
         }
 
+        output_format = f"{self.DEFAULT_FORMAT}_{self.DEFAULT_SAMPLE_RATE}_{self.DEFAULT_BIT_RATE}"
         url = self.API_ENDPOINT_TEMPLATE.format(voice_id=self.DEFAULT_VOICE_ID)
-        params = {"output_format": self.DEFAULT_OUTPUT_FORMAT}
+        params = {"output_format": output_format}
 
         response = requests.post(
             url,

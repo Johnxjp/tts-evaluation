@@ -11,7 +11,7 @@ class InworldProvider(TTSProvider):
     API_ENDPOINT = "https://api.inworld.ai/tts/v1/voice"
     DEFAULT_VOICE_ID = "Alex"
     DEFAULT_MODEL_ID = "inworld-tts-1"
-    DEFAULT_SAMPLE_RATE = "44100"
+    DEFAULT_SAMPLE_RATE = 44100
     DEFAULT_FORMAT = "MP3"
 
     def __init__(self, api_key: str, model: str = None):
@@ -28,6 +28,17 @@ class InworldProvider(TTSProvider):
     def name(self) -> str:
         """Return the provider name."""
         return "Inworld AI"
+
+    @property
+    def settings(self):
+        """Return provider settings."""
+        return {
+            "name": self.name,
+            "model_id": self.model,
+            "format": self.DEFAULT_FORMAT,
+            "voice_id": self.DEFAULT_VOICE_ID,
+            "sample_rate": self.DEFAULT_SAMPLE_RATE,
+        }
 
     def synthesize(self, text: str) -> bytes:
         """Synthesize speech using Inworld AI API.

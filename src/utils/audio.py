@@ -3,8 +3,9 @@
 import tempfile
 import os
 import uuid
+import json
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict, Any, List
 from datetime import datetime
 
 
@@ -54,11 +55,12 @@ def get_audio_format(audio_data: bytes) -> Optional[str]:
     return None
 
 
-def create_request_folder(text: str, base_path: Path = None) -> Tuple[str, Path]:
+def create_request_folder(text: str, provider_settings: List[Dict[str, Any]], base_path: Path = None) -> Tuple[str, Path]:
     """Create a unique folder for a TTS request.
 
     Args:
         text: The text content of the request
+        provider_settings: List of provider settings dictionaries
         base_path: Base directory for data storage (default: ./data)
 
     Returns:
@@ -74,14 +76,19 @@ def create_request_folder(text: str, base_path: Path = None) -> Tuple[str, Path]
     request_folder = base_path / request_uuid
     request_folder.mkdir(parents=True, exist_ok=True)
 
-    # Save text request to file
-    text_file = request_folder / "request.txt"
+    # Save request as JSON
+    request_file = request_folder / "request.json"
     timestamp = datetime.now().isoformat()
-    with open(text_file, "w", encoding="utf-8") as f:
-        f.write(f"Timestamp: {timestamp}\n")
-        f.write(f"Request UUID: {request_uuid}\n")
-        f.write("-" * 50 + "\n\n")
-        f.write(text)
+
+    request_data = {
+        "timestamp": timestamp,
+        "uuid": request_uuid,
+        "text": text,
+        "provider_settings": provider_settings,
+    }
+
+    with open(request_file, "w", encoding="utf-8") as f:
+        json.dump(request_data, f, indent=2, ensure_ascii=False)
 
     return request_uuid, request_folder
 
