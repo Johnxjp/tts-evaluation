@@ -32,7 +32,7 @@ class InworldProvider(TTSProvider):
             Exception: If synthesis fails
         """
         headers = {
-            "Authorization": f"Bearer {self.api_key}",
+            "Authorization": f"Basic {self.api_key}",
             "Content-Type": "application/json",
         }
 

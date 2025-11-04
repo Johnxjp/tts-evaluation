@@ -34,7 +34,7 @@ class CartesiaProvider(TTSProvider):
             text: The text to convert to speech
 
         Returns:
-            Audio data as bytes (WAV format)
+            Audio data as bytes
 
         Raises:
             Exception: If synthesis fails
@@ -55,7 +55,7 @@ class CartesiaProvider(TTSProvider):
             "language": "en",
             "output_format": {
                 "container": self.DEFAULT_FORMAT,
-                "bit_rate": "128000",
+                "bit_rate": 128000,
                 "sample_rate": self.DEFAULT_SAMPLE_RATE,
             },
         }

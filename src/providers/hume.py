@@ -10,8 +10,8 @@ class HumeProvider(TTSProvider):
 
     API_ENDPOINT = "https://api.hume.ai/v0/tts"
     DEFAULT_FORMAT = "mp3"
-    DEFAULT_VERSION = 2  # Octave 2
-    DEFAULT_VOICE = "445d65ed-a87f-4140-9820-daf6d4f0a200"  # Booming American Narrator
+    DEFAULT_VERSION = "2"  # Octave 2
+    DEFAULT_VOICE_ID = "445d65ed-a87f-4140-9820-daf6d4f0a200"  # Booming American Narrator
 
     @property
     def name(self) -> str:
@@ -36,16 +36,8 @@ class HumeProvider(TTSProvider):
         }
 
         payload = {
-            "utterances": [
-                {
-                    "text": text,
-                    "voice": {
-                        "VoicedId": {"id": self.DEFAULT_VOICE},
-                        "VoiceName": {"name": "Booming American Narrator"},
-                    },
-                }
-            ],
-            "format": self.DEFAULT_FORMAT,
+            "utterances": [{"text": text, "voice": {"id": self.DEFAULT_VOICE_ID}}],
+            "format": {"type": self.DEFAULT_FORMAT},
             "version": self.DEFAULT_VERSION,
         }
 
