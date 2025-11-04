@@ -142,17 +142,12 @@ def main():
         for provider_name in available_providers:
             options = MODEL_OPTIONS.get(provider_name, [])
             if options:
-                if len(options) == 1:
-                    st.markdown(f"**{provider_name}**")
-                    st.text(options[0])
-                    selected_models[provider_name] = options[0]
-                else:
-                    selected_models[provider_name] = st.selectbox(
-                        f"{provider_name}",
-                        options=options,
-                        index=0,
-                        key=f"model_{provider_name}"
-                    )
+                selected_models[provider_name] = st.selectbox(
+                    f"{provider_name}",
+                    options=options,
+                    index=0,
+                    key=f"model_{provider_name}"
+                )
                 st.markdown("")  # Add spacing
 
     # Load providers with selected models
@@ -201,6 +196,7 @@ def main():
 
         st.markdown("---")
         st.subheader("Generated Audio")
+        st.markdown(f"**Request Text:** {text_input}")
         st.info(f"📁 Request UUID: `{request_uuid}`")
 
         # Create columns for each provider
