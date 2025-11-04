@@ -13,10 +13,6 @@ from src.utils.audio import (
     create_request_folder,
     save_audio_permanent,
 )
-from src.utils.emotion import (
-    parse_emotion_tags,
-    SUPPORTED_EMOTIONS,
-)
 
 # Load environment variables
 load_dotenv()
