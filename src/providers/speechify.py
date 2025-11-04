@@ -57,7 +57,7 @@ class SpeechifyProvider(TTSProvider):
         }
 
         payload = {
-            "input": text,
+            "input": f"<speak>{text}</speak>",  # all speechify text has SSML
             "voice_id": self.DEFAULT_VOICE_ID,
             "audio_format": self.DEFAULT_FORMAT,
             "model": self.model,
