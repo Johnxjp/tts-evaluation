@@ -11,7 +11,7 @@ class CartesiaProvider(TTSProvider):
     API_ENDPOINT = "https://api.cartesia.ai/tts/bytes"
     API_VERSION = "2025-04-16"
     DEFAULT_MODEL = "sonic-3"
-    DEFAULT_VOICE_ID = "228fca29-3a0a-435c-8728-5cb483251068"  # Kiefer
+    DEFAULT_VOICE_ID = "c961b81c-a935-4c17-bfb3-ba2239de8c2f"  # Kyle
     DEFAULT_SAMPLE_RATE = 44100
     DEFAULT_FORMAT = "mp3"
 
@@ -77,8 +77,10 @@ class CartesiaProvider(TTSProvider):
         # Replace <tag>emotion</tag> with [emotion] for supported emotions
         def replace_tag(match):
             emotion = match.group(1).strip().lower()
-            if emotion in self.EMOTION_MAP:
+            if emotion in self.EMOTION_MAP and emotion == "laughter":
                 return f"[{self.EMOTION_MAP[emotion]}]"
+            elif emotion in self.EMOTION_MAP:
+                return f'<emotion value="{self.EMOTION_MAP[emotion]}"/>'
             return ""  # Remove unsupported emotion tags
 
         return re.sub(r"<tag>(.*?)</tag>", replace_tag, text).strip()

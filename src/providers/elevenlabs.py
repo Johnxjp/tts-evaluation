@@ -9,7 +9,7 @@ class ElevenLabsProvider(TTSProvider):
     """ElevenLabs TTS provider."""
 
     API_ENDPOINT_TEMPLATE = "https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
-    DEFAULT_VOICE_ID = "nPczCjzI2devNBz1zQrb"  # Brian
+    DEFAULT_VOICE_ID = "1SM7GgM6IMuvQlz2BwM3"  # Mark
     DEFAULT_MODEL_ID = "eleven_v3"  # or eleven_flash_v2_5
     DEFAULT_FORMAT = "mp3"
     DEFAULT_SAMPLE_RATE = 44100

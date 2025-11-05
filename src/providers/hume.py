@@ -76,7 +76,7 @@ class HumeProvider(TTSProvider):
             # Remove emotion tags if provider doesn't support emotions
             return re.sub(r"<tag>(.*?)</tag>", "", text).strip(), ""
 
-        emotions = re.findall(r"<tag>(.*?)</tag>", text).strip()
+        emotions = re.findall(r"<tag>(.*?)</tag>", text)
         processed_text = re.sub(r"<tag>(.*?)</tag>", "", text).strip()
         return processed_text, ", ".join(emotions)
 
