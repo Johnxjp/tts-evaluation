@@ -22,6 +22,7 @@ class SpeechifyProvider(TTSProvider):
         "excited": "energetic",
         "sad": "sad",
         "scared": "terrified",
+        "calm": "calm",
     }
 
     def __init__(self, api_key: str, model: str = None):

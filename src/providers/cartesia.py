@@ -22,6 +22,7 @@ class CartesiaProvider(TTSProvider):
         "excited": "excited",
         "sad": "sad",
         "scared": "scared",
+        "calm": "calm"
     }
 
     def __init__(self, api_key: str, model: str = None):

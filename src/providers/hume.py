@@ -22,6 +22,7 @@ class HumeProvider(TTSProvider):
         "excited": "happy",
         "sad": "sad",
         "scared": "fearful",
+        "calm": "calm"
     }
 
     def __init__(self, api_key: str, model: str = None):
@@ -128,7 +129,7 @@ class HumeProvider(TTSProvider):
         }
 
         # Build utterance
-        utterance = {"text": text, "voice": {"id": self.DEFAULT_VOICE_ID}}
+        utterance = {"text": text.strip(), "voice": {"id": self.DEFAULT_VOICE_ID}}
 
         # Add description field only for Octave '1' if emotions are present
         if emotions and self.can_emote:
