@@ -20,9 +20,11 @@ class ElevenLabsProvider(TTSProvider):
         "laughter": "laughter",
         "angry": "angry",
         "excited": "excited",
+        "happy": "happy",
         "sad": "sad",
+        "surprised": "surprised",
         "scared": "scared",
-        "calm": "calm"
+        "calm": "calm",
     }
 
     def __init__(self, api_key: str, model: str = None):
@@ -118,7 +120,7 @@ class ElevenLabsProvider(TTSProvider):
             headers=headers,
             json=payload,
             params=params,
-            timeout=30,
+            timeout=60,
         )
 
         if response.status_code != 200:

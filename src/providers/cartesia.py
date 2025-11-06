@@ -20,9 +20,11 @@ class CartesiaProvider(TTSProvider):
         "laughter": "laughter",
         "angry": "angry",
         "excited": "excited",
+        "happy": "happy",
         "sad": "sad",
         "scared": "scared",
-        "calm": "calm"
+        "surprised": "surprised",
+        "calm": "calm",
     }
 
     def __init__(self, api_key: str, model: str = None):
@@ -81,7 +83,7 @@ class CartesiaProvider(TTSProvider):
             if emotion in self.EMOTION_MAP and emotion == "laughter":
                 return f"[{self.EMOTION_MAP[emotion]}]"
             elif emotion in self.EMOTION_MAP:
-                return f'<emotion value="{self.EMOTION_MAP[emotion]}"/>'
+                return f'<emotion value="{self.EMOTION_MAP[emotion]}" />'
             return ""  # Remove unsupported emotion tags
 
         return re.sub(r"<tag>(.*?)</tag>", replace_tag, text).strip()

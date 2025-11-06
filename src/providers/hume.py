@@ -13,7 +13,7 @@ class HumeProvider(TTSProvider):
     API_ENDPOINT = "https://api.hume.ai/v0/tts"
     DEFAULT_FORMAT = "mp3"
     DEFAULT_VERSION = "2"  # Octave 2
-    DEFAULT_VOICE_ID = "445d65ed-a87f-4140-9820-daf6d4f0a200"  # Booming American Narrator
+    DEFAULT_VOICE_ID = "82a76fb8-3524-4e87-9265-9795c8e4ede6"  # Booming American Narrator
 
     # Emotion mapping for Hume
     EMOTION_MAP = {
@@ -22,7 +22,8 @@ class HumeProvider(TTSProvider):
         "excited": "happy",
         "sad": "sad",
         "scared": "fearful",
-        "calm": "calm"
+        "calm": "calm",
+        "surprised": "surprised",
     }
 
     def __init__(self, api_key: str, model: str = None):

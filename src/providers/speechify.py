@@ -22,6 +22,8 @@ class SpeechifyProvider(TTSProvider):
         "excited": "energetic",
         "sad": "sad",
         "scared": "terrified",
+        "happy": "happy",
+        "surprised": "surprised",
         "calm": "calm",
     }
 

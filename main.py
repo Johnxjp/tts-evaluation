@@ -210,7 +210,7 @@ def main():
     # Emotion buttons
     st.markdown("**Add Emotion Tags**")
     st.text(
-        "You can add emotions like <tag>EMOTION</tag>. Supported emotions are laughter, angry, excited, sad and scared. Not every model supports emotions. Unsupported emotions will be stripped out"
+        "You can add emotions like <tag>emotion</tag>. Supported emotions are 'laughter', 'angry', 'excited', 'sad' and 'scared'. Not every model supports emotions. Unsupported emotions will be stripped out"
     )
 
     # Show which models support emotions

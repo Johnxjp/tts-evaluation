@@ -22,6 +22,7 @@ class InworldProvider(TTSProvider):
         "excited": "happy",
         "sad": "sad",
         "scared": "fearful",
+        "surprised": "surprised",
     }
 
     def __init__(self, api_key: str, model: str = None):
