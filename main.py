@@ -89,32 +89,61 @@ def get_generation_history(limit=5):
 def show_generation_page():
     """Show the main generation page."""
 
-    # Get API keys
-    api_keys = {
-        "cartesia": os.getenv("CARTESIA_API_KEY"),
-        "inworld": os.getenv("INWORLD_API_KEY"),
-        "elevenlabs": os.getenv("ELEVENLABS_API_KEY"),
-        "hume": os.getenv("HUME_API_KEY"),
-        "speechify": os.getenv("SPEECHIFY_API_KEY"),
-    }
-
-    # Check if any providers are configured
-    if not any(api_keys.values()):
-        st.error("⚠️ No TTS providers configured. Please set up your API keys in the .env file.")
-        st.info(
-            """
-            Required environment variables:
-            - CARTESIA_API_KEY
-            - INWORLD_API_KEY
-            - ELEVENLABS_API_KEY
-            - HUME_API_KEY
-            - SPEECHIFY_API_KEY
-            """
-        )
-        return
-
-    # Sidebar - Model Selection
+    # Sidebar - API Keys and Model Selection
     with st.sidebar:
+        st.header("🔑 API Keys")
+        st.markdown("Enter your API keys for each provider:")
+
+        # API key inputs with session state
+        if "api_keys" not in st.session_state:
+            st.session_state.api_keys = {
+                "cartesia": os.getenv("CARTESIA_API_KEY", ""),
+                "inworld": os.getenv("INWORLD_API_KEY", ""),
+                "elevenlabs": os.getenv("ELEVENLABS_API_KEY", ""),
+                "hume": os.getenv("HUME_API_KEY", ""),
+                "speechify": os.getenv("SPEECHIFY_API_KEY", ""),
+            }
+
+        with st.expander("Configure API Keys", expanded=False):
+            st.session_state.api_keys["cartesia"] = st.text_input(
+                "Cartesia API Key",
+                value=st.session_state.api_keys["cartesia"],
+                type="password",
+                key="cartesia_api_key_input",
+            )
+            st.session_state.api_keys["inworld"] = st.text_input(
+                "Inworld API Key",
+                value=st.session_state.api_keys["inworld"],
+                type="password",
+                key="inworld_api_key_input",
+            )
+            st.session_state.api_keys["elevenlabs"] = st.text_input(
+                "ElevenLabs API Key",
+                value=st.session_state.api_keys["elevenlabs"],
+                type="password",
+                key="elevenlabs_api_key_input",
+            )
+            st.session_state.api_keys["hume"] = st.text_input(
+                "Hume API Key",
+                value=st.session_state.api_keys["hume"],
+                type="password",
+                key="hume_api_key_input",
+            )
+            st.session_state.api_keys["speechify"] = st.text_input(
+                "Speechify API Key",
+                value=st.session_state.api_keys["speechify"],
+                type="password",
+                key="speechify_api_key_input",
+            )
+
+        api_keys = st.session_state.api_keys
+
+        # Check if any providers are configured
+        if not any(api_keys.values()):
+            st.error("⚠️ No TTS providers configured. Please add your API keys above.")
+            return
+
+        st.markdown("---")
         st.header("⚙️ Model Settings")
         st.markdown("Select the model for each TTS provider:")
         st.markdown("---")
@@ -397,7 +426,7 @@ def show_results_page():
     st.title("📊 Results")
     st.markdown("View generated audio samples for evaluation.")
 
-    data_dir = Path.cwd() / "data"
+    data_dir = Path.cwd() / "sample"
 
     # Load samples metadata from CSV
     csv_path = data_dir / "samples.csv"
@@ -472,7 +501,9 @@ def show_results_page():
                         provider_key = audio_file.stem.lower()
                         provider_info = provider_map.get(provider_key, {})
 
-                        provider_name = provider_info.get("name", audio_file.stem.replace("_", " ").title())
+                        provider_name = provider_info.get(
+                            "name", audio_file.stem.replace("_", " ").title()
+                        )
                         model_id = provider_info.get("model_id", "")
 
                         # Display provider name and model

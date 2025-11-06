@@ -1,0 +1,42 @@
+{
+  "timestamp": "2025-11-06T17:16:55.078365",
+  "uuid": "3528b6a2-d83e-4984-aa57-adba316b3754",
+  "text": "I’ve got an idea for a Heinz Ketchup Commercial. I was at this super posh restaurant. Super posh. The type of place that has chandeliers, and paintings on the wall, and way too many forks. I think classical music was playing… maybe it was jazz… no, definitely classical. The hostess walks up to me, she says “Mr. Sheeran, is this your first time dining with us?” and I say “yep”. The waiter comes over, he’s telling me about the specials: “Super fancy, fancy vegetables, fancy sauces.” I said, “Sounds fancy”. So, fast forward and the food comes. The waiter goes on to tell me “We are proud to present this farm to table blah blah blah, posh and fancy blah blah blah, with a side of blah blah blah.” You know the food looked good, I just thought there was something missing. So, I reach into my bag. I take out the only thing that can complete me. And at that point, the whole world came to a stop. And the waiter was screaming, through his eyes, “Nooooooo”. So that’s my idea, do you want to do it?",
+  "provider_settings": [
+    {
+      "name": "Cartesia",
+      "model_id": "sonic-3",
+      "format": "mp3",
+      "voice_id": "c961b81c-a935-4c17-bfb3-ba2239de8c2f",
+      "sample_rate": 44100
+    },
+    {
+      "name": "Inworld AI",
+      "model_id": "inworld-tts-1",
+      "format": "MP3",
+      "voice_id": "Alex",
+      "sample_rate": 44100
+    },
+    {
+      "name": "ElevenLabs",
+      "model_id": "eleven_v3",
+      "format": "mp3",
+      "voice_id": "1SM7GgM6IMuvQlz2BwM3",
+      "sample_rate": 44100
+    },
+    {
+      "name": "Hume",
+      "model_id": "1",
+      "format": "mp3",
+      "voice_id": "82a76fb8-3524-4e87-9265-9795c8e4ede6",
+      "sample_rate": null
+    },
+    {
+      "name": "Speechify",
+      "model_id": "simba-english",
+      "format": "mp3",
+      "voice_id": "oliver",
+      "sample_rate": null
+    }
+  ]
+}

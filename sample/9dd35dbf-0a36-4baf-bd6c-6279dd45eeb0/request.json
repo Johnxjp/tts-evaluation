@@ -1,0 +1,42 @@
+{
+  "timestamp": "2025-11-06T11:40:02.528167",
+  "uuid": "9dd35dbf-0a36-4baf-bd6c-6279dd45eeb0",
+  "text": "Call the national continence helpline on 1800 33 00 66 or visit continence.org.au",
+  "provider_settings": [
+    {
+      "name": "Cartesia",
+      "model_id": "sonic-3",
+      "format": "mp3",
+      "voice_id": "c961b81c-a935-4c17-bfb3-ba2239de8c2f",
+      "sample_rate": 44100
+    },
+    {
+      "name": "Inworld AI",
+      "model_id": "inworld-tts-1",
+      "format": "MP3",
+      "voice_id": "Alex",
+      "sample_rate": 44100
+    },
+    {
+      "name": "ElevenLabs",
+      "model_id": "eleven_v3",
+      "format": "mp3",
+      "voice_id": "1SM7GgM6IMuvQlz2BwM3",
+      "sample_rate": 44100
+    },
+    {
+      "name": "Hume",
+      "model_id": "1",
+      "format": "mp3",
+      "voice_id": "82a76fb8-3524-4e87-9265-9795c8e4ede6",
+      "sample_rate": null
+    },
+    {
+      "name": "Speechify",
+      "model_id": "simba-english",
+      "format": "mp3",
+      "voice_id": "oliver",
+      "sample_rate": null
+    }
+  ]
+}
