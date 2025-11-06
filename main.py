@@ -341,33 +341,84 @@ def show_generation_page():
                     st.success(f"✅ Preference saved: {preference}")
 
 
+def convert_youtube_url_with_timestamp(url: str) -> str:
+    """Convert YouTube URL with timestamp to embed format with start parameter.
+
+    Examples:
+        https://youtu.be/1yON3ySblWQ?si=V2D5sVTv8RvijRUq&t=1168
+        -> https://www.youtube.com/embed/1yON3ySblWQ?start=1168
+
+        https://www.youtube.com/watch?v=xVlRompc1yE
+        -> https://www.youtube.com/embed/xVlRompc1yE
+    """
+    import re
+    from urllib.parse import urlparse, parse_qs
+
+    # Extract video ID and timestamp
+    video_id = None
+    timestamp = None
+
+    # Handle youtu.be format
+    if "youtu.be" in url:
+        match = re.search(r"youtu\.be/([^?]+)", url)
+        if match:
+            video_id = match.group(1)
+        # Extract timestamp from t parameter
+        match = re.search(r"[?&]t=(\d+)", url)
+        if match:
+            timestamp = match.group(1)
+
+    # Handle youtube.com/watch format
+    elif "youtube.com/watch" in url:
+        parsed = urlparse(url)
+        params = parse_qs(parsed.query)
+        video_id = params.get("v", [None])[0]
+        timestamp = params.get("t", [None])[0]
+
+    # Handle youtube.com/shorts format
+    elif "youtube.com/shorts" in url:
+        match = re.search(r"shorts/([^?]+)", url)
+        if match:
+            video_id = match.group(1)
+
+    # Build embed URL
+    if video_id:
+        embed_url = f"https://www.youtube.com/embed/{video_id}"
+        if timestamp:
+            embed_url += f"?start={timestamp}"
+        return embed_url
+
+    # Return original URL if we couldn't parse it
+    return url
+
+
 def show_results_page():
     """Show the results page with specific UUIDs."""
     st.title("📊 Results")
     st.markdown("View generated audio samples for evaluation.")
 
-    # List of UUIDs to display
-    uuids = [
-        "04623d1d-3753-484c-9904-6c1e7ac30b45",
-        "57f69e29-fef8-425e-acec-da47c62e36a3",
-        "7197ccca-e69e-42c8-a413-d296de5773b7",
-        "7bfd00db-948d-43fc-9032-ec69d9605c7f",
-        "9f4317f9-0625-4512-b696-47e72ff853ae",
-        "eebe009c-2972-4a12-b2cb-990e1bbaa393",
-        "8e052014-3bed-42f7-bd13-5e1a2b89a855",
-        "1df9579e-a819-414f-bd6f-5dc6c25e93b0",
-        "e0c566ee-a746-4afb-9b3a-4298a86a1831",
-        "5d675229-c4a5-4fa3-aac1-41de13abb5c6",
-        "a766a675-304f-4bfa-b2c7-85213a459640",
-        "9dd35dbf-0a36-4baf-bd6c-6279dd45eeb0",
-        "8d18befe-70c8-4257-9895-132e6e5c3425",
-        "3528b6a2-d83e-4984-aa57-adba316b3754",
-    ]
-
     data_dir = Path.cwd() / "data"
 
-    # Display each result
-    for uuid in uuids:
+    # Load samples metadata from CSV
+    csv_path = data_dir / "samples.csv"
+    if not csv_path.exists():
+        st.error("samples.csv not found in data directory")
+        return
+
+    import csv
+
+    samples_metadata = {}
+    with open(csv_path, "r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            samples_metadata[row["ID"]] = {
+                "title": row["Title"],
+                "emotion": row["Emotion"],
+                "url": row["URL"],
+            }
+
+    # Display each result in order from CSV
+    for uuid, metadata in samples_metadata.items():
         folder_path = data_dir / uuid
 
         if not folder_path.exists():
@@ -390,8 +441,19 @@ def show_results_page():
             # Create a block for this UUID
             with st.container():
                 st.markdown("---")
-                st.subheader(f"🎵 {uuid}")
+                # Display title with emotion
+                st.subheader(f"{metadata['title']} [{metadata['emotion']}]")
                 st.markdown(f"**Text:** {text}")
+                st.markdown("")
+
+                # Embed YouTube URL (half width)
+                col1, _ = st.columns([1, 1])
+                with col1:
+                    # Convert URL to embed format with timestamp
+                    embed_url = convert_youtube_url_with_timestamp(metadata["url"])
+                    # Use iframe to preserve timestamp
+                    iframe_html = f'<iframe width="100%" height="400" src="{embed_url}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+                    st.markdown(iframe_html, unsafe_allow_html=True)
                 st.markdown("")
 
                 # Find all audio files
