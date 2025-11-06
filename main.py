@@ -86,13 +86,8 @@ def get_generation_history(limit=5):
     return generations[:limit]
 
 
-def main():
-    """Run the Streamlit TTS evaluation application."""
-    st.set_page_config(
-        page_title="TTS Evaluation Tool",
-        page_icon="🎙️",
-        layout="wide",
-    )
+def show_generation_page():
+    """Show the main generation page."""
 
     # Get API keys
     api_keys = {
@@ -345,50 +340,109 @@ def main():
 
                     st.success(f"✅ Preference saved: {preference}")
 
-    # # History section
-    # st.markdown("---")
-    # st.subheader("📜 Recent Generations")
 
-    # history = get_generation_history(limit=5)
+def show_results_page():
+    """Show the results page with specific UUIDs."""
+    st.title("📊 Results")
+    st.markdown("View generated audio samples for evaluation.")
 
-    # if not history:
-    #     st.info("No previous generations found. Generate some audio to see history!")
-    # else:
-    #     for uuid, folder_path, timestamp, text, provider_settings in history:
-    #         with st.expander(
-    #             f"🎵 {text[:50]}{'...' if len(text) > 50 else ''} - {timestamp.strftime('%Y-%m-%d %H:%M:%S') if timestamp else 'Unknown'}"
-    #         ):
-    #             st.caption(f"**UUID:** `{uuid}`")
-    #             st.markdown(f"**Text:** {text}")
+    # List of UUIDs to display
+    uuids = [
+        "04623d1d-3753-484c-9904-6c1e7ac30b45",
+        "57f69e29-fef8-425e-acec-da47c62e36a3",
+        "7197ccca-e69e-42c8-a413-d296de5773b7",
+        "7bfd00db-948d-43fc-9032-ec69d9605c7f",
+        "9f4317f9-0625-4512-b696-47e72ff853ae",
+        "eebe009c-2972-4a12-b2cb-990e1bbaa393",
+        "8e052014-3bed-42f7-bd13-5e1a2b89a855",
+        "1df9579e-a819-414f-bd6f-5dc6c25e93b0",
+        "e0c566ee-a746-4afb-9b3a-4298a86a1831",
+        "5d675229-c4a5-4fa3-aac1-41de13abb5c6",
+        "a766a675-304f-4bfa-b2c7-85213a459640",
+        "9dd35dbf-0a36-4baf-bd6c-6279dd45eeb0",
+        "8d18befe-70c8-4257-9895-132e6e5c3425",
+        "3528b6a2-d83e-4984-aa57-adba316b3754",
+    ]
 
-    #             # Display provider settings if available
-    #             if provider_settings:
-    #                 st.markdown("**Provider Settings:**")
-    #                 for settings in provider_settings:
-    #                     with st.expander(f"📋 {settings.get('name', 'Unknown Provider')}"):
-    #                         st.json(settings)
+    data_dir = Path.cwd() / "data"
 
-    #             st.markdown("---")
+    # Display each result
+    for uuid in uuids:
+        folder_path = data_dir / uuid
 
-    #             # Find all audio files in the folder
-    #             audio_files = list(folder_path.glob("*.mp3")) + list(folder_path.glob("*.wav"))
+        if not folder_path.exists():
+            st.warning(f"⚠️ UUID not found: {uuid}")
+            continue
 
-    #             if audio_files:
-    #                 # Create columns for audio players
-    #                 num_files = len(audio_files)
-    #                 cols = st.columns(num_files)
+        # Read request.json
+        request_json = folder_path / "request.json"
+        if not request_json.exists():
+            st.warning(f"⚠️ No request.json found for: {uuid}")
+            continue
 
-    #                 for idx, audio_file in enumerate(sorted(audio_files)):
-    #                     with cols[idx]:
-    #                         # Extract provider name from filename
-    #                         provider_name = audio_file.stem.replace("_", " ").title()
-    #                         st.markdown(f"**{provider_name}**")
+        try:
+            with open(request_json, "r", encoding="utf-8") as f:
+                data = json.load(f)
 
-    #                         # Determine audio format
-    #                         audio_format = audio_file.suffix[1:]  # Remove the dot
-    #                         st.audio(str(audio_file), format=f"audio/{audio_format}")
-    #             else:
-    #                 st.warning("No audio files found for this generation.")
+            text = data.get("text", "")
+            provider_settings = data.get("provider_settings", [])
+
+            # Create a block for this UUID
+            with st.container():
+                st.markdown("---")
+                st.subheader(f"🎵 {uuid}")
+                st.markdown(f"**Text:** {text}")
+                st.markdown("")
+
+                # Find all audio files
+                audio_files = list(folder_path.glob("*.mp3")) + list(folder_path.glob("*.wav"))
+
+                if audio_files:
+                    # Create mapping of filename to provider settings
+                    provider_map = {}
+                    for settings in provider_settings:
+                        name = settings.get("name", "").lower().replace(" ", "_")
+                        provider_map[name] = settings
+
+                    # Display audio files
+                    for audio_file in sorted(audio_files):
+                        # Extract provider name from filename
+                        provider_key = audio_file.stem.lower()
+                        provider_info = provider_map.get(provider_key, {})
+
+                        provider_name = provider_info.get("name", audio_file.stem.replace("_", " ").title())
+                        model_id = provider_info.get("model_id", "")
+
+                        # Display provider name and model
+                        st.markdown(f"**{provider_name}** - `{model_id}`")
+
+                        # Audio player
+                        audio_format = audio_file.suffix[1:]  # Remove the dot
+                        st.audio(str(audio_file), format=f"audio/{audio_format}")
+                        st.markdown("")
+                else:
+                    st.warning("No audio files found.")
+
+        except Exception as e:
+            st.error(f"❌ Error loading {uuid}: {str(e)}")
+
+
+def main():
+    """Run the Streamlit TTS evaluation application."""
+    st.set_page_config(
+        page_title="TTS Evaluation Tool",
+        page_icon="🎙️",
+        layout="wide",
+    )
+
+    # Sidebar navigation
+    st.sidebar.title("Navigation")
+    page = st.sidebar.radio("Go to", ["Generate", "Results"])
+
+    if page == "Generate":
+        show_generation_page()
+    else:
+        show_results_page()
 
 
 if __name__ == "__main__":
