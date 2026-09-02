@@ -2,10 +2,10 @@
 
 A side-by-side comparison of five commercial text-to-speech (TTS) APIs: **Cartesia**, **ElevenLabs**, **Hume**, **Inworld AI** and **Speechify**.
 
-The repo contains a small Streamlit app that sends the same passage to every provider, stores the audio, and lets you listen and pick a favourite. Using that app, fifteen real-world passages covering six emotional registers were generated once per provider and scored by hand against a fixed rubric.
+The repo contains a small Streamlit app that sends the same passage to every provider, stores the audio, and lets you listen and pick a favourite. Using that app, fifteen real-world passages covering six emotional registers were evaluated by hand against a fixed rubric. Cartesia, ElevenLabs, Hume and Inworld were scored on all fifteen. Speechify was scored on fourteen, because its clip for the property listing was never generated. Fourteen of the fifteen passages, with their audio, are included in this repo.
 
 - Scoring data: [TTS Model Evaluation](https://docs.google.com/spreadsheets/d/1bXOn7FAQ6JIcFb9tLGuAeRoAWK9B4NC6tptKO4Lr0tw/edit?gid=0#gid=0) (Google Sheet)
-- Generated audio for 14 of the 15 samples is checked in under `sample/` and browsable on the app's Results page
+- Audio for the fourteen public passages is checked in under `sample/` and browsable on the app's Audio samples page
 
 ## Headline results
 
@@ -51,7 +51,7 @@ Fifteen passages were transcribed from real recordings so that each has a human 
 | [Ed Sheeran Heinz ad](https://www.youtube.com/watch?v=keOaQm6RpBg) | Neutral | Long-form anecdote, around 200 words |
 | Commercial property listing | Neutral | Addresses, measurements, an email and a phone number. Not included in the repo |
 
-The reference clips are listed in `sample/samples.csv` and embedded on the Results page next to each provider's audio.
+The reference clips are listed in `sample/samples.csv` and embedded on the Audio samples page next to each provider's audio.
 
 ### Generation
 
@@ -64,10 +64,10 @@ The reference clips are listed in `sample/samples.csv` and embedded on the Resul
 | Cartesia | sonic-3 | Kyle | Inline `[laughter]` or `<emotion value="..."/>` | sonic-3 models only |
 | ElevenLabs | eleven_v3 | Mark | Audio tag `[excited]` | eleven_v3 only |
 | Inworld AI | inworld-tts-1 | Alex | Audio tag `[happy]` | excited maps to happy, scared to fearful, laughter to laughing |
-| Hume | Octave 1 | Stock Hume voice¹ | Emotion words in the utterance `description` | Octave 1 only; Octave 2 ignores descriptions |
+| Hume | Octave 1 | Two stock voices¹ | Emotion words in the utterance `description` | Octave 1 only; Octave 2 ignores descriptions |
 | Speechify | simba-english | Oliver | SSML `<speechify:style emotion="...">` | excited maps to energetic, scared to terrified; laughter unsupported |
 
-¹ The default Hume voice in the code was changed after the evaluation run. The voice actually used for each sample is recorded in its `request.json`.
+¹ The Hume voice was switched after the first four passages. See the caveats below. The voice used for each sample is recorded in its `request.json`.
 
 ### Scoring rubric
 
@@ -148,9 +148,9 @@ Free-text notes and comments recorded alongside the scores:
 
 - One listener, one pass, not blind. The scores are a single person's judgement.
 - Fifteen passages is small. The scared and surprised registers have one passage each, so those rows are single data points.
-- One voice per provider. A different voice choice could change the ranking.
+- One voice per provider, except Hume. A different voice choice could change the ranking.
+- Hume's voice was switched part-way through the run. The first four passages generated (Solskjaer, the shot on Elo, Fallon on Kobe Bryant, Alagiah) use one stock Hume voice, and every later passage uses the Booming American Narrator voice that is now the default in the code. Two of Hume's four perfect scores and two of its four preference wins came from the first voice, so Hume's row blends two voices and is not directly comparable to the others.
 - Speechify was not scored on the property listing because that generation was not produced, so its averages are over 14 clips.
-
 
 ## Running the app
 
@@ -176,12 +176,12 @@ Only providers with a key are loaded. The sidebar also lets you choose a model p
 
 **Generate page.** Enter text, optionally with emotion tags such as `<tag>angry</tag>` (supported emotions: laughter, angry, excited, sad, scared). Click Generate Speech to synthesise with every loaded provider. Each request gets a UUID folder under `data/` containing `request.json` (timestamp, text and the exact provider settings used) and one audio file per provider. After listening you can pick the best clip and save it to `result.json` in the same folder.
 
-**Results page.** Reads `sample/samples.csv` and, for each sample, shows the transcript, embeds the reference YouTube clip at the right timestamp, and plays each provider's audio.
+**Audio samples page.** Reads `sample/samples.csv` and, for each sample, shows the transcript, embeds the reference YouTube clip at the right timestamp, and plays each provider's audio. Scores are not shown here; they live in the Google Sheet.
 
 ## Project layout
 
 ```
-main.py                  Streamlit app: Generate and Results pages
+main.py                  Streamlit app: Generate and Audio samples pages
 src/providers/base.py    TTSProvider abstract base class
 src/providers/*.py       One adapter per provider (cartesia, elevenlabs, hume, inworld, speechify)
 src/utils/audio.py       Request folders, audio saving, format detection

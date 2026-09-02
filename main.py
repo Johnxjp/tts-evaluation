@@ -415,9 +415,9 @@ def convert_youtube_url_with_timestamp(url: str) -> str:
     return url
 
 
-def show_results_page():
-    """Show the results page with specific UUIDs."""
-    st.title("📊 Results")
+def show_audio_samples_page():
+    """Show the audio samples page for the evaluated passages."""
+    st.title("🎧 Audio samples")
     st.markdown("View generated audio samples for evaluation.")
 
     data_dir = Path.cwd() / "sample"
@@ -524,12 +524,12 @@ def main():
 
     # Sidebar navigation
     st.sidebar.title("Navigation")
-    page = st.sidebar.radio("Go to", ["Generate", "Results"])
+    page = st.sidebar.radio("Go to", ["Generate", "Audio samples"])
 
     if page == "Generate":
         show_generation_page()
     else:
-        show_results_page()
+        show_audio_samples_page()
 
 
 if __name__ == "__main__":
