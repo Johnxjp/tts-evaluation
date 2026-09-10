@@ -9,13 +9,13 @@ The repo contains a small Streamlit app that sends the same passage to every pro
 
 ## Headline results
 
-| Provider | Model | Mean score (/12) | Accuracy (/5) | Prosody (/3) | Emotion (/2) | Preferred |
-|---|---|---:|---:|---:|---:|---:|
-| ElevenLabs | eleven_v3 | 10.7 | 4.9 | 2.6 | 1.5 | 5 |
-| Speechify | simba-english | 10.7 | 4.5 | 2.5 | 1.7 | 3 |
-| Cartesia | sonic-3 | 10.5 | 4.4 | 2.7 | 1.5 | 3 |
-| Hume | Octave 1 | 10.5 | 4.2 | 2.7 | 1.7 | 4 |
-| Inworld AI | inworld-tts-1 | 9.3 | 3.9 | 2.2 | 1.2 | 0 |
+| Provider | Model | Mean score (/12) | Accuracy (/5) | Prosody (/3) | Emotion (/2) | Other (/2) | Preferred |
+|---|---|---:|---:|---:|---:|---:|---:|
+| ElevenLabs | eleven_v3 | 10.7 | 4.9 | 2.6 | 1.5 | 1.8 | 5 |
+| Speechify | simba-english | 10.7 | 4.5 | 2.5 | 1.7 | 2.0 | 3 |
+| Cartesia | sonic-3 | 10.5 | 4.4 | 2.7 | 1.5 | 1.9 | 3 |
+| Hume | Octave 1 | 10.5 | 4.2 | 2.7 | 1.7 | 1.8 | 4 |
+| Inworld AI | inworld-tts-1 | 9.3 | 3.9 | 2.2 | 1.2 | 2.0 | 0 |
 
 "Preferred" is the number of passages (out of 15) where that provider's clip was picked as the single best.
 
@@ -73,12 +73,12 @@ The reference clips are listed in `sample/samples.csv` and embedded on the Audio
 
 Each clip was checked against twelve yes/no questions in four categories. A category starts at full marks and loses one point per issue found, giving a total out of 12.
 
-| Category | Points | Issues checked |
-|---|---:|---|
-| Accuracy | 5 | Words missed, words hallucinated, standard word mispronounced, number mispronounced, acronym mispronounced, name mispronounced |
-| Prosody | 3 | Unnatural pauses, unnatural rhythm or cadence, odd inflections |
-| Emotion | 2 | Emotion wrong or missing, emotion unconvincing |
-| Other | 2 | Glitches or artefacts in the audio |
+| Category | Points | Issues checked | Criteria |
+|---|---:|---|---|
+| Accuracy | 5 | Words missed, words hallucinated, standard word mispronounced, number mispronounced, acronym mispronounced, name mispronounced | Any words missed?<br>Any words hallucinated?<br>Any standard words mispronounced?<br>Any numbers mispronounced?<br>Any acronym mispronounced?<br>Any name mispronounced? |
+| Prosody | 3 | Unnatural pauses, unnatural rhythm or cadence, odd inflections | Any unnatural pauses?<br>Any unnatural rhythm or cadence?<br>Any odd inflections? |
+| Emotion | 2 | Emotion wrong or missing, emotion unconvincing | Was the emotion wrong or missing?<br>Was the emotion unconvincing? |
+| Other | 2 | Glitches or artefacts in the audio | Were there any glitches or artifacts in the audio? |
 
 After scoring all five clips for a passage, one clip was marked as the personal preference. This is a separate signal from the score and captures overall listenability rather than the absence of faults.
 
